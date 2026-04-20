@@ -1,0 +1,182 @@
+eureka:
+  client:
+    enabled: false
+    register-with-eureka: false
+    fetch-registry: false
+
+spring:
+  application:
+    name: gateway
+  cloud:
+    gateway:
+      routes:
+        - id: passenger-service
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/passengers/**
+        - id: realtime-tracking-service
+          uri: http://localhost:8085
+          predicates:
+            - Path=/api/tracking/**
+        - id: security-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/auth/**
+        - id: ticketing-payment-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/tickets/**, /api/payments/**, /api/subscriptions/**
+        - id: operation-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/bus/**, /api/lignes/**, /api/stations/**, /api/trajets/**
+        - id: fleet-management-service
+          uri: http://localhost:8086
+          predicates:
+            - Path=/api/fleet/affectations/**, /api/fleet/buses/**, /api/stations/**, /api/fleet/conducteurs/**
+        - id: notification-service
+          uri: http://localhost:8087
+          predicates:
+            - Path=/api/notifications/**
+
+        # ── Routes Swagger par service ───────────────────────────
+        - id: passenger-service-docs
+          uri: http://localhost:8082
+          predicates:
+            - Path=/passenger/v3/api-docs
+          filters:
+            - RewritePath=/passenger/v3/api-docs, /v3/api-docs
+
+        - id: security-service-docs
+          uri: http://localhost:8081
+          predicates:
+            - Path=/security/v3/api-docs
+          filters:
+            - RewritePath=/security/v3/api-docs, /v3/api-docs
+
+        - id: ticketing-service-docs
+          uri: http://localhost:8084
+          predicates:
+            - Path=/ticketing/v3/api-docs
+          filters:
+            - RewritePath=/ticketing/v3/api-docs, /v3/api-docs
+
+        - id: notification-service-docs
+          uri: http://localhost:8087
+          predicates:
+            - Path=/notification/v3/api-docs
+          filters:
+            - RewritePath=/notification/v3/api-docs, /v3/api-docs
+
+        - id: fleet-service-docs
+          uri: http://localhost:8086
+          predicates:
+            - Path=/fleet/v3/api-docs
+          filters:
+            - RewritePath=/fleet/v3/api-docs, /v3/api-docs
+
+        - id: operation-service-docs
+          uri: http://localhost:8083
+          predicates:
+            - Path=/operation/v3/api-docs
+          filters:
+            - RewritePath=/operation/v3/api-docs, /v3/api-docs
+
+        - id: tracking-service-docs
+          uri: http://localhost:8085
+          predicates:
+            - Path=/tracking/v3/api-docs
+          filters:
+            - RewritePath=/tracking/v3/api-docs, /v3/api-docs
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+server:
+  port: 8080
+
+# ── Swagger UI centralisé ────────────────────────────────────────────
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    urls:
+      - name: security-service
+        url: /security/v3/api-docs
+      - name: passenger-service
+        url: /passenger/v3/api-docs
+      - name: ticketing-service
+        url: /ticketing/v3/api-docs
+      - name: notification-service
+        url: /notification/v3/api-docs
+      - name: fleet-service
+        url: /fleet/v3/api-docs
+      - name: operation-service
+        url: /operation/v3/api-docs
+      - name: tracking-service
+        url: /tracking/v3/api-docs
+  api-docs:
+    enabled: true
+
+# ── Resilience4j Circuit Breakers ────────────────────────────────────
+resilience4j:
+  circuitbreaker:
+    configs:
+      default:
+        sliding-window-size: 10
+        failure-rate-threshold: 50
+        wait-duration-in-open-state: 10s
+        permitted-number-of-calls-in-half-open-state: 3
+        automatic-transition-from-open-to-half-open-enabled: true
+        record-exceptions:
+          - java.io.IOException
+          - java.util.concurrent.TimeoutException
+          - org.springframework.web.reactive.function.client.WebClientException
+    instances:
+      passenger-cb:
+        base-config: default
+      auth-cb:
+        base-config: default
+      operation-cb:
+        base-config: default
+      ticketing-cb:
+        base-config: default
+      tracking-cb:
+        base-config: default
+      fleet-cb:
+        base-config: default
+
+  timelimiter:
+    configs:
+      default:
+        timeout-duration: 5s
+    instances:
+      passenger-cb:
+        base-config: default
+
+# ── Tracing ───────────────────────────────────────────────────────────
+management:
+  tracing:
+    sampling:
+      probability: 1.0
+  zipkin:
+    tracing:
+      endpoint: ${SPRING_ZIPKIN_BASE_URL:http://localhost:9411}/api/v2/spans
+  endpoints:
+    web:
+      exposure:
+        include: health,info,gateway,metrics,circuitbreakers
+  endpoint:
+    health:
+      show-details: always
+    gateway:
+      enabled: true
+
+logging:
+  level:
+    org.springframework.cloud.gateway: INFO
+    com.brt.gateway: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level [%X{traceId},%X{spanId}] %logger{36} - %msg%n"
+

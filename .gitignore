@@ -1,0 +1,42 @@
+# Compiled output
+*/target/
+target/
+!*/**/src/main/**/target/
+!*/**/src/test/**/target/
+
+# IDE files
+.idea/
+*.iws
+*.iml
+*.ipr
+.mvn/
+.mvn/wrapper/maven-wrapper.jar
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+.vscode/
+
+# Build directories
+build/
+*/build/
+nbproject/private/
+nbbuild/
+dist/
+nbdist/
+.gradle/
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Application specific
+*.pid
+*.lock
