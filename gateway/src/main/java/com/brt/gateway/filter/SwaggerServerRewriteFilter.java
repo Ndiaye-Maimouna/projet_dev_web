@@ -20,6 +20,8 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.stream.StreamSupport;
 
 @Component
 public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
@@ -71,9 +73,9 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
         try {
             ObjectMapper mapper = new ObjectMapper();
             JsonNode root = mapper.readTree(body);
-
-            // Remplacer le tableau "servers" par la gateway
             ObjectNode objNode = (ObjectNode) root;
+
+            // 1. Réécrire les servers (déjà fait)
             ArrayNode servers = mapper.createArrayNode();
             ObjectNode server = mapper.createObjectNode();
             server.put("url", "http://localhost:" + gatewayPort);
@@ -81,9 +83,50 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
             servers.add(server);
             objNode.set("servers", servers);
 
+            // 2. Ajouter le Bearer scheme
+            ObjectNode components = (ObjectNode) objNode.get("components");
+            if (components == null) {
+                components = mapper.createObjectNode();
+                objNode.set("components", components);
+            }
+            ObjectNode securitySchemes = mapper.createObjectNode();
+            ObjectNode bearerScheme = mapper.createObjectNode();
+            bearerScheme.put("type", "http");
+            bearerScheme.put("scheme", "bearer");
+            bearerScheme.put("bearerFormat", "JWT");
+            securitySchemes.set("Bearer Authentication", bearerScheme);
+            components.set("securitySchemes", securitySchemes);
+
+            // 3. Supprimer X-User-* des paramètres de chaque opération
+            List<String> headersToHide = List.of("X-User-Id", "X-User-Role", "X-User-Email");
+            JsonNode paths = objNode.get("paths");
+            if (paths != null) {
+                paths.fields().forEachRemaining(pathEntry -> {
+                    pathEntry.getValue().fields().forEachRemaining(methodEntry -> {
+                        JsonNode parameters = methodEntry.getValue().get("parameters");
+                        if (parameters instanceof ArrayNode arrayNode) {
+                            for (int i = arrayNode.size() - 1; i >= 0; i--) {
+                                JsonNode param = arrayNode.get(i);
+                                if ("header".equals(param.path("in").asText())
+                                        && headersToHide.contains(param.path("name").asText())) {
+                                    arrayNode.remove(i);
+                                }
+                            }
+                        }
+                    });
+                });
+            }
+
+            // 4. Ajouter security globale
+            ArrayNode securityArray = mapper.createArrayNode();
+            ObjectNode securityItem = mapper.createObjectNode();
+            securityItem.set("Bearer Authentication", mapper.createArrayNode());
+            securityArray.add(securityItem);
+            objNode.set("security", securityArray);
+
             return mapper.writeValueAsString(root);
         } catch (Exception e) {
-            return body; // Retourner le body original en cas d'erreur
+            return body;
         }
     }
 

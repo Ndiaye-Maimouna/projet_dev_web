@@ -28,15 +28,12 @@ public class ConducteurController {
     @GetMapping("/{id}")
     public ResponseEntity<ConducteurResponseDTO> getConducteurById(@PathVariable UUID id) {
         try {
-            Map<String, Object> resultat =
-                    conducteurService.getConducteurAvecDisponibilite(id);
+            Map<String, Object> resultat = conducteurService.getConducteurAvecDisponibilite(id);
             Conducteur conducteur = (Conducteur) resultat.get("conducteur");
-            resultat.put("conducteur", conducteurMapper.toResponseDTO(conducteur));
-
-            return ResponseEntity.ok((ConducteurResponseDTO) resultat);
+            ConducteurResponseDTO dto = conducteurMapper.toResponseDTO(conducteur);
+            return ResponseEntity.ok(dto);
         } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body((ConducteurResponseDTO) Map.of("erreur", e.getMessage()));
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
         }
     }
 
