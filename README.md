@@ -242,7 +242,7 @@ direction TB
 
 ---
 
-### ticketing-payment-service — port 8085
+### ticketing-payment-service — port 8084
 > Billettique, paiements et abonnements.
 
 **Responsabilités :** achat et validation de tickets, traitement des paiements (mobile money), souscription/renouvellement d'abonnements.
