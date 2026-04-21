@@ -1,6 +1,6 @@
 # BRT Senegal : Système de Transport en Commun Rapide
 
-> Plateforme microservices Spring Boot 3.2 / Java 21 pour la gestion du réseau de Bus Rapid Transit.
+> Plateforme en microservices Spring Boot 3.2 / Java 21 pour la gestion du réseau de Bus Rapid Transit réalisé par Maimouna Ndiaye, Adja Soukeyna Diop, Ndeye Absa Der et Fa Syaka Diouf.
 
 ---
 
