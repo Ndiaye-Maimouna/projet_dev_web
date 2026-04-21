@@ -13,7 +13,6 @@ import java.util.List;
 @Configuration
 public class SwaggerConfig {
 
-    // Headers injectés par la gateway à ignorer globalement
     private static final List<String> GATEWAY_HEADERS = List.of(
             "X-User-Id", "X-User-Role", "X-User-Email"
     );

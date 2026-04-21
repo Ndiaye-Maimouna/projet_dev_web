@@ -21,7 +21,6 @@ import reactor.core.publisher.Mono;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.stream.StreamSupport;
 
 @Component
 public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
@@ -33,7 +32,6 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
     public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         String path = exchange.getRequest().getURI().getPath();
 
-        // Appliquer uniquement sur les routes de docs
         if (!path.endsWith("/v3/api-docs")) {
             return chain.filter(exchange);
         }
@@ -75,7 +73,6 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
             JsonNode root = mapper.readTree(body);
             ObjectNode objNode = (ObjectNode) root;
 
-            // 1. Réécrire les servers (déjà fait)
             ArrayNode servers = mapper.createArrayNode();
             ObjectNode server = mapper.createObjectNode();
             server.put("url", "http://localhost:" + gatewayPort);
@@ -83,7 +80,6 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
             servers.add(server);
             objNode.set("servers", servers);
 
-            // 2. Ajouter le Bearer scheme
             ObjectNode components = (ObjectNode) objNode.get("components");
             if (components == null) {
                 components = mapper.createObjectNode();
@@ -97,7 +93,6 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
             securitySchemes.set("Bearer Authentication", bearerScheme);
             components.set("securitySchemes", securitySchemes);
 
-            // 3. Supprimer X-User-* des paramètres de chaque opération
             List<String> headersToHide = List.of("X-User-Id", "X-User-Role", "X-User-Email");
             JsonNode paths = objNode.get("paths");
             if (paths != null) {
@@ -117,7 +112,6 @@ public class SwaggerServerRewriteFilter implements GlobalFilter, Ordered {
                 });
             }
 
-            // 4. Ajouter security globale
             ArrayNode securityArray = mapper.createArrayNode();
             ObjectNode securityItem = mapper.createObjectNode();
             securityItem.set("Bearer Authentication", mapper.createArrayNode());
