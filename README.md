@@ -51,7 +51,7 @@ Client (mobile / web)
      ┌──────────────┼──────────────────────┐
      ▼              ▼                      ▼
 :8081 security  :8082 passenger      :8083 operation
-:8084 fleet     :8085 ticketing      :8086 tracking
+:8086 fleet     :8084 ticketing      :8085 tracking
 :8761 eureka    :8888 config-server
                     │
               ┌─────┼──────┐
@@ -233,7 +233,7 @@ direction TB
 
 ---
 
-### fleet-management-service — port 8084
+### fleet-management-service — port 8086
 > Gestion de la flotte de bus, conducteurs et affectations.
 
 **Responsabilités :** CRUD bus/conducteurs, affectation bus-ligne-conducteur, planification de maintenance, publication de l'événement `BusAssignedToLine`.
@@ -251,7 +251,7 @@ direction TB
 
 ---
 
-### realtime-tracking-service — port 8086
+### realtime-tracking-service — port 8085
 > Suivi GPS temps réel des bus et calcul d'ETA.
 
 **Responsabilités :** ingestion des positions GPS, calcul des temps d'arrivée estimés, détection des retards, publication de `BusArrivedAtStation` et `BusDelayDetected`.
